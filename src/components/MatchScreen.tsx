@@ -1,6 +1,7 @@
 import type { Mode } from "../types";
 import type { MatchResult } from "../game/match";
-import PlayerPortrait from "./PlayerPortrait";
+import CompareBar from "./CompareBar";
+import Pitch from "./Pitch";
 
 interface Props {
   result: MatchResult;
@@ -8,31 +9,12 @@ interface Props {
   onRestart: () => void;
 }
 
-function CompareBar({ label, home, away, suffix = "" }: { label: string; home: number; away: number; suffix?: string }) {
-  const total = Math.max(home + away, 1);
-  const hp = Math.round((home / total) * 100);
-  const ap = 100 - hp;
-  return (
-    <div className="compare">
-      <div className="compare__row">
-        <b>{home}{suffix}</b>
-        <span>{label}</span>
-        <b>{away}{suffix}</b>
-      </div>
-      <div className="compare__bars">
-        <div className="compare__home" style={{ width: `${hp}%` }} />
-        <div className="compare__away" style={{ width: `${ap}%` }} />
-      </div>
-    </div>
-  );
-}
-
 export default function MatchScreen({ result, mode, onRestart }: Props) {
   const { home, away, ratingsHome: rh, ratingsAway: ra } = result;
   const homeWin = result.winner === "home";
   const title = mode === "local"
     ? `${homeWin ? home.name : away.name} Kazandı!`
-    : homeWin ? "Kazandın!" : "Maçu kaybettin";
+    : homeWin ? "Kazandın!" : "Maçı kaybettin";
 
   return (
     <div className="screen match">
@@ -103,22 +85,11 @@ export default function MatchScreen({ result, mode, onRestart }: Props) {
       </div>
 
       <section className="panel match-lineups">
-        <h2 className="panel__title">KADROLAR</h2>
-        <div className="lineup">
-          {[home, away].map((team, ti) => (
-            <div className={`lineup__team ${ti === 0 ? "lineup__team--you" : ""}`} key={ti}>
-              <b>{team.name}</b>
-              <div className="lineup__players">
-                {team.players.map((p) => (
-                  <div className="lineup__player" key={p.id} title={`${p.name} · ${p.club} (${p.league}) · ${p.position} · OVR ${p.ovr}`}>
-                    <PlayerPortrait player={p} size="sm" showBadge={false} />
-                    <span>{p.name.split(" ").slice(-1)[0]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        <h2 className="panel__title">SAHA DİZİLİŞİ</h2>
+        <Pitch
+          home={{ name: home.name, players: home.players, scorers: result.scorersHome }}
+          away={{ name: away.name, players: away.players, scorers: result.scorersAway }}
+        />
       </section>
 
       <div className="match-footer">

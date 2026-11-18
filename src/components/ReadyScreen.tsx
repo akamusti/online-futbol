@@ -1,6 +1,10 @@
 import type { Player } from "../types";
 import { rateSquad } from "../game/match";
 import PlayerCard from "./PlayerCard";
+import CompareBar from "./CompareBar";
+
+const LINE_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 } as const;
+const byLine = (ps: Player[]) => [...ps].sort((a, b) => LINE_ORDER[a.broad] - LINE_ORDER[b.broad] || b.ovr - a.ovr);
 
 interface Props {
   you: Player[];
@@ -31,6 +35,19 @@ export default function ReadyScreen({ you, ai, youBudget, aiBudget, names, onSta
         </button>
       </div>
 
+      <section className="panel h2h">
+        <div className="h2h__head">
+          <span className="h2h__team h2h__team--you">{names.you}</span>
+          <h2 className="panel__title">KAFA KAFAYA</h2>
+          <span className="h2h__team h2h__team--ai">{names.ai}</span>
+        </div>
+        <CompareBar label="Genel" home={rh.overall} away={ra.overall} />
+        <CompareBar label="Hücum" home={rh.attack} away={ra.attack} />
+        <CompareBar label="Orta saha" home={rh.midfield} away={ra.midfield} />
+        <CompareBar label="Savunma" home={rh.defense} away={ra.defense} />
+        <CompareBar label="Kaleci" home={rh.gk} away={ra.gk} />
+      </section>
+
       <div className="ready-grid">
         {[
           { label: `${names.you.toUpperCase()} KADROSU`, players: you, rating: rh, budget: youBudget, side: "you" },
@@ -53,7 +70,7 @@ export default function ReadyScreen({ you, ai, youBudget, aiBudget, names, onSta
               <span>Bütçe <b>₺{t.budget}M</b></span>
             </div>
             <div className="ready-team__cards">
-              {t.players.map((p) => (
+              {byLine(t.players).map((p) => (
                 <PlayerCard key={p.id} player={p} compact />
               ))}
             </div>

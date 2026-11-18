@@ -40,6 +40,12 @@ export default function SetupScreen({
         <button className="btn btn--primary btn--hero" onClick={onStart}>
           MEZATI BAŞLAT <span>→</span>
         </button>
+        <div className="setup-summary">
+          <span>{mode === "ai" ? "🤖 AI'ya karşı" : "👥 İki kişi"}</span>
+          {mode === "ai" && <span>Zorluk: <b>{DIFFS.find((d) => d.key === difficulty)?.label}</b></span>}
+          <span>Bütçe: <b>₺{budget.toLocaleString("tr-TR")}M</b></span>
+          <span>{LOT_COUNT} lot · {SQUAD_SIZE} oyuncu</span>
+        </div>
       </div>
 
       <div className="setup-grid">
