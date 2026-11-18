@@ -1,8 +1,8 @@
 import { useEffect, useReducer, useRef, useState } from "react";
-import type { Mode, Player } from "../types";
+import type { Broad, Mode, Player } from "../types";
 import { PLAYERS } from "../data/players";
 import {
-  SQUAD_SIZE, LOT_COUNT, aiDecision, createLots, ensureCategoryCoverage, openingBid,
+  SQUAD_SIZE, LOT_COUNT, CATEGORIES, CATEGORY_NAMES, aiDecision, createLots, ensureCategoryCoverage, openingBid,
   type Difficulty,
 } from "../game/auction";
 import PlayerCard from "./PlayerCard";
@@ -212,7 +212,9 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
   }, [s.finished]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const player = s.lots[s.lotIndex];
+  const upcoming = s.lots.slice(s.lotIndex + 1, s.lotIndex + 4);
   const activeSide = s.turn;
+  const aiThinking = mode === "ai" && activeSide === "ai" && !s.lotWinner && !s.finished;
   const activeName = nameOf(s, activeSide);
   const canAct = !s.lotWinner && !s.finished && (mode === "local" || activeSide === "you");
   const squadFull = squadOf(s, activeSide).length >= SQUAD_SIZE;
@@ -223,6 +225,30 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
     Number.isInteger(customAmount) &&
     customAmount > s.currentBid &&
     customAmount <= activeBudget;
+
+  // Klavye kısayolları: 1/2/3 → +1/+3/+5M, P → geç.
+  const keyState = useRef({ canAct, squadFull, activeSide, activeBudget, currentBid: s.currentBid });
+  keyState.current = { canAct, squadFull, activeSide, activeBudget, currentBid: s.currentBid };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+      const k = keyState.current;
+      if (!k.canAct) return;
+      const inc = ({ "1": 1, "2": 3, "3": 5 } as Record<string, number>)[e.key];
+      if (inc) {
+        const amount = k.currentBid + inc;
+        if (!k.squadFull && amount <= k.activeBudget) dispatch({ type: "BID", side: k.activeSide, amount });
+        e.preventDefault();
+      } else if (e.key === "p" || e.key === "P") {
+        dispatch({ type: "PASS", side: k.activeSide });
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   return (
     <div className="screen auction">
@@ -264,12 +290,16 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
 
           <div className="bid-panel">
             <div className="bid-status">
-              <span className={`turn-pill ${activeSide === "you" ? "turn-pill--you" : "turn-pill--ai"}`}>
-                {s.lotWinner ? "LOT SONUÇLANDI" : `SIRASI: ${activeName.toUpperCase()}`}
+              <span className={`turn-pill ${activeSide === "you" ? "turn-pill--you" : "turn-pill--ai"} ${aiThinking ? "turn-pill--thinking" : ""}`}>
+                {s.lotWinner
+                  ? "LOT SONUÇLANDI"
+                  : aiThinking
+                    ? <>{activeName.toUpperCase()} DÜŞÜNÜYOR<span className="dots"><i /><i /><i /></span></>
+                    : `SIRASI: ${activeName.toUpperCase()}`}
               </span>
               <div className="current-bid">
                 <span className="current-bid__label">GÜNCEL TEKLİF</span>
-                <span className="current-bid__value">₺{fmt(s.currentBid)}<small>M</small></span>
+                <span className="current-bid__value" key={`${s.lotIndex}-${s.currentBid}`}>₺{fmt(s.currentBid)}<small>M</small></span>
                 <span className={`current-bid__leader ${s.leader === "you" ? "is-you" : s.leader === "ai" ? "is-ai" : ""}`}>
                   {s.leader ? `Teklif: ${nameOf(s, s.leader)}` : "Açılış teklifi"}
                 </span>
@@ -287,6 +317,7 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
                     onClick={() => dispatch({ type: "BID", side: activeSide, amount })}
                   >
                     +{inc}M <small>₺{fmt(amount)}M</small>
+                    <kbd className="kbd">{inc === 1 ? 1 : inc === 3 ? 2 : 3}</kbd>
                   </button>
                 );
               })}
@@ -296,6 +327,7 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
                 onClick={() => dispatch({ type: "PASS", side: activeSide })}
               >
                 GEÇ
+                <kbd className="kbd">P</kbd>
               </button>
             </div>
             <div className="custom-bid">
@@ -340,6 +372,25 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
               {activeName} — kalan bütçe <b>₺{fmt(activeBudget)}M</b> · kadro <b>{squadOf(s, activeSide).length}/{SQUAD_SIZE}</b>
             </div>
           </div>
+
+          {upcoming.length > 0 && (
+            <div className="panel upcoming">
+              <h3 className="panel__title">SIRADAKİ LOTLAR</h3>
+              <div className="upcoming__list">
+                {upcoming.map((p, i) => (
+                  <div className="upcoming__item" key={p.id}>
+                    <span className="upcoming__no">#{s.lotIndex + i + 2}</span>
+                    <PlayerPortrait player={p} size="sm" showBadge={false} />
+                    <div className="upcoming__info">
+                      <b>{p.name}</b>
+                      <span>{p.position} · ₺{p.value}M</span>
+                    </div>
+                    <span className="upcoming__ovr">{p.ovr}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <aside className="auction-side">
@@ -360,8 +411,12 @@ export default function AuctionScreen({ mode, difficulty, budget, onFinish }: Pr
   );
 }
 
+const CAT_SHORT: Record<Broad, string> = { GK: "KL", DF: "DF", MF: "OS", FW: "FV" };
+
 function SquadMini({ title, side, players, budget }: { title: string; side: Side; players: Player[]; budget: number }) {
   const ovr = players.length ? Math.round(players.reduce((a, p) => a + p.ovr, 0) / players.length) : 0;
+  const counts = { GK: 0, DF: 0, MF: 0, FW: 0 } as Record<Broad, number>;
+  for (const p of players) counts[p.broad]++;
   return (
     <div className={`panel squad-mini squad-mini--${side}`}>
       <div className="squad-mini__head">
@@ -379,6 +434,16 @@ function SquadMini({ title, side, players, budget }: { title: string; side: Side
             </div>
           ) : (
             <div className="squad-chip squad-chip--empty" key={i}>+</div>
+          );
+        })}
+      </div>
+      <div className="squad-mini__cats">
+        {CATEGORIES.map((c) => {
+          const n = counts[c];
+          return (
+            <span key={c} className={`cat-pill ${n ? "" : "cat-pill--missing"}`} title={`${CATEGORY_NAMES[c]}: ${n}`}>
+              {CAT_SHORT[c]} <b>{n}</b>
+            </span>
           );
         })}
       </div>
