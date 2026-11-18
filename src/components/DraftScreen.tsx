@@ -1,45 +1,19 @@
 import { useMemo, useState } from "react";
-import type { Player } from "../types";
-import { CLUB_BY_ID, type Club, type ClubId, type DraftPlayer } from "../data/draft";
-import { broadOf, flagOf, slugify } from "../data/players";
+import { CLUB_BY_ID, type ClubId, type DraftPlayer } from "../data/draft";
+import { flagOf } from "../data/players";
 import {
-  FORMATIONS, FORMATION_BY_ID, LINES, LINE_SHORT, TASKS, TASK_BY_ID,
+  FORMATIONS, FORMATION_BY_ID, LINES, LINE_SHORT, MEZAT_BUDGETS, TASKS, TASK_BY_ID, TIMERS,
   drawClubs, fits, lineOf, poolFor, squadSize, standings, turnOf,
-  type Formation, type FormationId, type Task, type TaskId,
+  type FormationId,
 } from "../game/draft";
 import PlayerPortrait from "./PlayerPortrait";
+import DraftAuction from "./DraftAuction";
+import {
+  ClubBadge, SquadBoard, TimerBar, asPortrait, pc, squadsOf, useCountdown,
+  type Config, type Pick,
+} from "./draftShared";
 
-const COLORS = ["#22c55e", "#60a5fa", "#f5b942", "#f472b6"];
 const MEDALS = ["🥇", "🥈", "🥉", "4."];
-
-/** Draft oyuncusunu portre bileşeninin beklediği biçime çevirir. */
-function asPortrait(p: DraftPlayer): Player {
-  return {
-    id: p.id, name: p.name, nation: p.nation, club: p.clubs.join(""), league: "",
-    position: p.position, broad: broadOf(p.position), age: 0, ovr: 0,
-    attrs: { pac: 0, sho: 0, pas: 0, dri: 0, def: 0, phy: 0 }, value: 0,
-    photo: `${import.meta.env.BASE_URL}photos/${slugify(p.name)}.png`,
-  };
-}
-
-function ClubBadge({ club, small = false }: { club: Club; small?: boolean }) {
-  return (
-    <span
-      className={`club-badge ${small ? "club-badge--sm" : ""}`}
-      style={{ "--c1": club.colors[0], "--c2": club.colors[1] } as React.CSSProperties}
-    >
-      <i />{club.name}
-    </span>
-  );
-}
-
-interface Config {
-  names: string[];
-  task: TaskId;
-  formation: FormationId;
-  hide: boolean;
-  clubs: Club[];
-}
 
 export default function DraftScreen({ onExit }: { onExit: () => void }) {
   const [phase, setPhase] = useState<"setup" | "pick" | "result">("setup");
@@ -49,24 +23,23 @@ export default function DraftScreen({ onExit }: { onExit: () => void }) {
     formation: "222",
     hide: true,
     clubs: drawClubs(FORMATION_BY_ID.get("222")!, 2),
+    mode: "sira",
+    timer: 0,
+    budget: 100,
   }));
-  const [picks, setPicks] = useState<{ player: DraftPlayer; by: number }[]>([]);
+  const [picks, setPicks] = useState<Pick[]>([]);
+  const [round, setRound] = useState(0);
 
-  const startDraft = () => { setPicks([]); setPhase("pick"); };
+  const start = () => { setPicks([]); setRound((r) => r + 1); setPhase("pick"); };
   const rematch = () => {
     setCfg((c) => ({ ...c, clubs: drawClubs(FORMATION_BY_ID.get(c.formation)!, c.names.length) }));
-    setPicks([]);
-    setPhase("pick");
+    start();
   };
 
-  if (phase === "setup") return <DraftSetup cfg={cfg} setCfg={setCfg} onStart={startDraft} />;
+  if (phase === "setup") return <DraftSetup cfg={cfg} setCfg={setCfg} onStart={start} />;
   if (phase === "pick") {
-    return (
-      <DraftPick
-        cfg={cfg} picks={picks} setPicks={setPicks}
-        onDone={() => setPhase("result")} onBack={() => setPhase("setup")}
-      />
-    );
+    const props = { cfg, picks, setPicks, onDone: () => setPhase("result"), onBack: () => setPhase("setup") };
+    return cfg.mode === "mezat" ? <DraftAuction key={round} {...props} /> : <DraftPick key={round} {...props} />;
   }
   return <DraftResult cfg={cfg} picks={picks} onRematch={rematch} onSetup={() => setPhase("setup")} onExit={onExit} />;
 }
@@ -78,13 +51,10 @@ function DraftSetup({ cfg, setCfg, onStart }: {
   const formation = FORMATION_BY_ID.get(cfg.formation)!;
   const pool = useMemo(() => poolFor(cfg.clubs.map((c) => c.id)), [cfg.clubs]);
 
-  const setCount = (n: number) => setCfg((c) => {
-    const names = Array.from({ length: n }, (_, i) => c.names[i] ?? `Oyuncu ${i + 1}`);
-    return { ...c, names, clubs: drawClubs(FORMATION_BY_ID.get(c.formation)!, n) };
-  });
-  const setFormation = (id: FormationId) =>
-    setCfg((c) => ({ ...c, formation: id, clubs: drawClubs(FORMATION_BY_ID.get(id)!, c.names.length) }));
-  const reroll = () => setCfg((c) => ({ ...c, clubs: drawClubs(FORMATION_BY_ID.get(c.formation)!, c.names.length) }));
+  const redraw = (c: Config): Config => ({ ...c, clubs: drawClubs(FORMATION_BY_ID.get(c.formation)!, c.names.length) });
+  const setCount = (n: number) => setCfg((c) =>
+    redraw({ ...c, names: Array.from({ length: n }, (_, i) => c.names[i] ?? `Oyuncu ${i + 1}`) }));
+  const setFormation = (id: FormationId) => setCfg((c) => redraw({ ...c, formation: id }));
 
   return (
     <div className="screen draft-setup">
@@ -92,15 +62,15 @@ function DraftSetup({ cfg, setCfg, onStart }: {
         <div className="hero__kicker">ARKADAŞLARINLA · SIRAYLA SEÇ</div>
         <h1 className="hero__title">GÖREV <span>DRAFTI</span></h1>
         <p className="hero__sub">
-          Oyun 5 kulüp çeker (2'si Türk). Bu kulüplerde tüm zamanlarda oynamış futbolcular arasından sırayla
-          seçim yapın. Göreve en uygun takımı kuran kazanır.
+          Oyun 5 kulüp çeker (2'si Türk). Bu kulüplerde tüm zamanlarda oynamış futbolculardan
+          sırayla seçin ya da mezatta kapışın. Göreve en uygun takımı kuran kazanır.
         </p>
       </div>
 
       <div className="setup-grid">
         <section className="panel">
           <h2 className="panel__title">GÖREV</h2>
-          <div className="diffs">
+          <div className="task-grid">
             {TASKS.map((t) => (
               <button
                 key={t.id}
@@ -135,7 +105,7 @@ function DraftSetup({ cfg, setCfg, onStart }: {
             />
             <span>
               <b>Değerleri gizle</b>
-              <small>Boy ve gol sayıları draft bitene kadar görünmez; kim daha iyi biliyor görelim.</small>
+              <small>Boy, gol ve doğum yılları draft bitene kadar görünmez. Kim daha iyi biliyor, görelim.</small>
             </span>
           </label>
         </section>
@@ -144,18 +114,14 @@ function DraftSetup({ cfg, setCfg, onStart }: {
           <h2 className="panel__title">OYUNCULAR</h2>
           <div className="budget-presets">
             {[2, 3, 4].map((n) => (
-              <button
-                key={n}
-                className={`chip ${cfg.names.length === n ? "chip--active" : ""}`}
-                onClick={() => setCount(n)}
-              >
+              <button key={n} className={`chip ${cfg.names.length === n ? "chip--active" : ""}`} onClick={() => setCount(n)}>
                 {n} kişi
               </button>
             ))}
           </div>
           <div className="name-list">
             {cfg.names.map((name, i) => (
-              <label className="name-field" key={i} style={{ "--pc": COLORS[i] } as React.CSSProperties}>
+              <label className="name-field" key={i} style={pc(i)}>
                 <i />
                 <input
                   value={name}
@@ -171,35 +137,68 @@ function DraftSetup({ cfg, setCfg, onStart }: {
             ))}
           </div>
 
+          <div className="setting-label">Seçim şekli</div>
+          <div className="mode-picker">
+            <button className={`mode ${cfg.mode === "sira" ? "mode--active" : ""}`} onClick={() => setCfg((c) => ({ ...c, mode: "sira" }))}>
+              <span className="mode__icon">🔁</span>
+              <span><b>Sırayla seç</b><small>1-2-3, 3-2-1 yılan sırası</small></span>
+            </button>
+            <button className={`mode ${cfg.mode === "mezat" ? "mode--active" : ""}`} onClick={() => setCfg((c) => ({ ...c, mode: "mezat" }))}>
+              <span className="mode__icon">🔨</span>
+              <span><b>Mezat</b><small>Bütçeyle teklif verin, en yüksek alır</small></span>
+            </button>
+          </div>
+
+          {cfg.mode === "mezat" && (
+            <>
+              <div className="setting-label">Kişi başı bütçe</div>
+              <div className="budget-presets">
+                {MEZAT_BUDGETS.map((b) => (
+                  <button key={b} className={`chip ${cfg.budget === b ? "chip--active" : ""}`} onClick={() => setCfg((c) => ({ ...c, budget: b }))}>
+                    ₺{b}M
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div className="setting-label">{cfg.mode === "mezat" ? "Lot süresi (her teklifte sıfırlanır)" : "Seçim süresi"}</div>
+          <div className="budget-presets">
+            {TIMERS.map((t) => (
+              <button key={t} className={`chip ${cfg.timer === t ? "chip--active" : ""}`} onClick={() => setCfg((c) => ({ ...c, timer: t }))}>
+                {t ? `${t} sn` : "Süresiz"}
+              </button>
+            ))}
+          </div>
+          {cfg.timer > 0 && cfg.mode === "sira" && (
+            <div className="budget-hint">Süre dolarsa oyun sıradaki kişi için rastgele bir futbolcu seçer.</div>
+          )}
+
           <div className="setting-label">Kulüpler</div>
           <div className="club-row">
             {cfg.clubs.map((c) => <ClubBadge club={c} key={c.id} />)}
           </div>
           <div className="club-row__foot">
-            <span>{pool.length} futbolcu · kişi başı {squadSize(formation)} seçim</span>
-            <button className="btn btn--ghost" onClick={reroll}>🎲 Yeniden çek</button>
+            <span>{pool.length} futbolcu · kişi başı {squadSize(formation)} oyuncu</span>
+            <button className="btn btn--ghost" onClick={() => setCfg(redraw)}>🎲 Yeniden çek</button>
           </div>
         </section>
       </div>
 
       <div className="draft-start">
-        <button
-          className="btn btn--primary btn--hero"
-          disabled={cfg.names.some((n) => !n.trim())}
-          onClick={onStart}
-        >
-          DRAFTI BAŞLAT <span>→</span>
+        <button className="btn btn--primary btn--hero" disabled={cfg.names.some((n) => !n.trim())} onClick={onStart}>
+          {cfg.mode === "mezat" ? "MEZATI BAŞLAT" : "DRAFTI BAŞLAT"} <span>→</span>
         </button>
       </div>
     </div>
   );
 }
 
-// ── Seçim ───────────────────────────────────────────────────
+// ── Sırayla seçim ───────────────────────────────────────────
 function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
   cfg: Config;
-  picks: { player: DraftPlayer; by: number }[];
-  setPicks: React.Dispatch<React.SetStateAction<{ player: DraftPlayer; by: number }[]>>;
+  picks: Pick[];
+  setPicks: React.Dispatch<React.SetStateAction<Pick[]>>;
   onDone: () => void;
   onBack: () => void;
 }) {
@@ -214,15 +213,22 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
   const [query, setQuery] = useState("");
 
   const pool = useMemo(() => poolFor(clubIds), [cfg.clubs]); // eslint-disable-line react-hooks/exhaustive-deps
-  const squads = useMemo(
-    () => cfg.names.map((_, i) => picks.filter((p) => p.by === i).map((p) => p.player)),
-    [picks, cfg.names],
-  );
+  const squads = useMemo(() => squadsOf(picks, n), [picks, n]);
   const pickedBy = useMemo(() => new Map(picks.map((p) => [p.player.id, p.by])), [picks]);
 
   const done = picks.length >= total;
   const turn = done ? -1 : turnOf(picks.length, n);
   const mySquad = turn >= 0 ? squads[turn] : [];
+
+  const pick = (p: DraftPlayer, auto = false) => {
+    if (done || pickedBy.has(p.id) || !fits(formation, mySquad, p)) return;
+    setPicks((ps) => [...ps, { player: p, by: turn, auto }]);
+  };
+
+  const left = useCountdown(cfg.timer, picks.length, () => {
+    const opts = pool.filter((p) => !pickedBy.has(p.id) && fits(formation, mySquad, p));
+    if (opts.length) pick(opts[Math.floor(Math.random() * opts.length)], true);
+  }, done);
 
   const norm = (s: string) => s.toLocaleLowerCase("tr").normalize("NFD").replace(/[̀-ͯ]/g, "");
   const q = norm(query.trim());
@@ -231,11 +237,6 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
     .filter((p) => tab === "all" || p.clubs.includes(tab))
     .filter((p) => !q || norm(p.name).includes(q))
     .sort((a, b) => LINES.indexOf(lineOf(a)) - LINES.indexOf(lineOf(b)) || a.name.localeCompare(b.name, "tr"));
-
-  const pick = (p: DraftPlayer) => {
-    if (done || pickedBy.has(p.id) || !fits(formation, mySquad, p)) return;
-    setPicks((ps) => [...ps, { player: p, by: turn }]);
-  };
 
   return (
     <div className="screen draft">
@@ -264,18 +265,19 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
             </div>
           ) : (
             <>
-              <div className="draft-turn" style={{ "--pc": COLORS[turn] } as React.CSSProperties}>
+              <div className="draft-turn" style={pc(turn)}>
                 <span className="draft-turn__dot" />
                 <span>Sıra <b>{cfg.names[turn]}</b>'de · {size - mySquad.length} seçimi kaldı</span>
                 {!formation.any && (
                   <span className="draft-turn__need">
                     {LINES.filter((l) => formation.slots[l]).map((l) => {
-                      const left = (formation.slots[l] ?? 0) - mySquad.filter((p) => lineOf(p) === l).length;
-                      return <span key={l} className={left ? "" : "is-full"}>{LINE_SHORT[l]} {left}</span>;
+                      const rest = (formation.slots[l] ?? 0) - mySquad.filter((p) => lineOf(p) === l).length;
+                      return <span key={l} className={rest ? "" : "is-full"}>{LINE_SHORT[l]} {rest}</span>;
                     })}
                   </span>
                 )}
               </div>
+              <TimerBar left={left} total={cfg.timer} />
 
               <div className="draft-filters">
                 <div className="draft-tabs">
@@ -286,12 +288,7 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
                     </button>
                   ))}
                 </div>
-                <input
-                  className="draft-search"
-                  placeholder="Futbolcu ara…"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
+                <input className="draft-search" placeholder="Futbolcu ara…" value={query} onChange={(e) => setQuery(e.target.value)} />
               </div>
 
               <div className="draft-list">
@@ -304,7 +301,7 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
                       className={`draft-item ${owner !== undefined ? "is-taken" : ""}`}
                       disabled={!ok}
                       onClick={() => pick(p)}
-                      style={owner !== undefined ? ({ "--pc": COLORS[owner] } as React.CSSProperties) : undefined}
+                      style={owner !== undefined ? pc(owner) : undefined}
                     >
                       <PlayerPortrait player={asPortrait(p)} size="sm" showBadge={false} />
                       <span className="draft-item__main">
@@ -317,7 +314,7 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
                       {owner !== undefined ? (
                         <span className="draft-item__owner">{cfg.names[owner]}</span>
                       ) : !cfg.hide ? (
-                        <span className="draft-item__val">{task.formatValue(task.value(p))}</span>
+                        <span className="draft-item__val">{task.show(p)}</span>
                       ) : null}
                     </button>
                   );
@@ -331,8 +328,8 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
         <aside className="draft-teams">
           {cfg.names.map((name, i) => (
             <SquadBoard
-              key={i} name={name} color={COLORS[i]} squad={squads[i]} active={i === turn}
-              slots={formation} hide={cfg.hide} task={task}
+              key={i} name={name} index={i} squad={squads[i]} active={i === turn}
+              formation={formation} hide={cfg.hide} task={task}
             />
           ))}
         </aside>
@@ -341,82 +338,58 @@ function DraftPick({ cfg, picks, setPicks, onDone, onBack }: {
   );
 }
 
-function SquadBoard({ name, color, squad, active, slots, hide, task }: {
-  name: string; color: string; squad: DraftPlayer[]; active: boolean;
-  slots: Formation; hide: boolean; task: Task;
-}) {
-  const groups: { label: string; players: DraftPlayer[]; cap: number }[] = slots.any
-    ? [{ label: "SERBEST", players: squad, cap: slots.any }]
-    : LINES.filter((l) => slots.slots[l]).map((l) => ({
-      label: LINE_SHORT[l], players: squad.filter((p) => lineOf(p) === l), cap: slots.slots[l] ?? 0,
-    }));
-  return (
-    <div className={`panel squad-board ${active ? "is-active" : ""}`} style={{ "--pc": color } as React.CSSProperties}>
-      <div className="squad-board__head">
-        <b>{name}</b>
-        {!hide && squad.length > 0 && <span>{task.format(task.score(squad))}</span>}
-      </div>
-      {groups.map((g) => (
-        <div className="squad-board__line" key={g.label}>
-          <span className="squad-board__label">{g.label}</span>
-          <div className="squad-board__slots">
-            {Array.from({ length: g.cap }).map((_, k) => {
-              const p = g.players[k];
-              return p ? (
-                <span className="squad-board__slot" key={p.id} title={p.name}>{p.name.split(" ").slice(-1)[0]}</span>
-              ) : (
-                <span className="squad-board__slot is-empty" key={k}>—</span>
-              );
-            })}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // ── Sonuç ───────────────────────────────────────────────────
 function DraftResult({ cfg, picks, onRematch, onSetup, onExit }: {
-  cfg: Config; picks: { player: DraftPlayer; by: number }[];
+  cfg: Config; picks: Pick[];
   onRematch: () => void; onSetup: () => void; onExit: () => void;
 }) {
   const task = TASK_BY_ID.get(cfg.task)!;
-  const squads = cfg.names.map((_, i) => picks.filter((p) => p.by === i).map((p) => p.player));
+  const squads = squadsOf(picks, cfg.names.length);
   const table = standings(task, squads);
   const winners = table.filter((r) => r.rank === 1).map((r) => cfg.names[r.index]);
+  const pickOf = new Map(picks.map((p) => [p.player.id, p]));
+  const mezat = cfg.mode === "mezat";
 
   return (
     <div className="screen draft-result">
       <div className="match-head">
-        <span className="eyebrow">{task.icon} {task.label.toUpperCase()}</span>
+        <span className="eyebrow">{mezat ? "🔨 MEZAT · " : ""}{task.icon} {task.label.toUpperCase()}</span>
         <h1>{winners.length > 1 ? `Berabere: ${winners.join(" & ")}` : `${winners[0]} kazandı!`}</h1>
       </div>
 
       <div className="result-list">
         {table.map((r) => (
-          <section
-            key={r.index}
-            className={`panel result-team ${r.rank === 1 ? "is-winner" : ""}`}
-            style={{ "--pc": COLORS[r.index] } as React.CSSProperties}
-          >
+          <section key={r.index} className={`panel result-team ${r.rank === 1 ? "is-winner" : ""}`} style={pc(r.index)}>
             <div className="result-team__head">
               <span className="result-team__medal">{MEDALS[r.rank - 1]}</span>
               <b>{cfg.names[r.index]}</b>
               <span className="result-team__score">{task.format(r.score)}</span>
             </div>
+            {mezat && (
+              <div className="result-team__spent">
+                Harcanan ₺{picks.filter((p) => p.by === r.index).reduce((a, p) => a + (p.price ?? 0), 0)}M / ₺{cfg.budget}M
+              </div>
+            )}
             <div className="result-team__players">
               {[...squads[r.index]]
                 .sort((a, b) => LINES.indexOf(lineOf(a)) - LINES.indexOf(lineOf(b)))
-                .map((p) => (
-                  <div className="result-player" key={p.id}>
-                    <PlayerPortrait player={asPortrait(p)} size="sm" showBadge={false} />
-                    <span className="result-player__name">
-                      <b>{p.name}</b>
-                      <small><span className={`pos-tag pos-tag--${lineOf(p)}`}>{p.position}</span></small>
-                    </span>
-                    <span className="result-player__val">{task.formatValue(task.value(p))}</span>
-                  </div>
-                ))}
+                .map((p) => {
+                  const info = pickOf.get(p.id);
+                  return (
+                    <div className="result-player" key={p.id}>
+                      <PlayerPortrait player={asPortrait(p)} size="sm" showBadge={false} />
+                      <span className="result-player__name">
+                        <b>{p.name}</b>
+                        <small>
+                          <span className={`pos-tag pos-tag--${lineOf(p)}`}>{p.position}</span>
+                          {mezat && !info?.auto && <> · ₺{info?.price ?? 0}M</>}
+                          {info?.auto && <span className="auto-tag">OTOMATİK</span>}
+                        </small>
+                      </span>
+                      <span className="result-player__val">{task.show(p)}</span>
+                    </div>
+                  );
+                })}
             </div>
           </section>
         ))}
@@ -427,7 +400,7 @@ function DraftResult({ cfg, picks, onRematch, onSetup, onExit }: {
         <button className="btn" onClick={onSetup}>Ayarları değiştir</button>
         <button className="btn" onClick={onExit}>Ana menü</button>
       </div>
-      <p className="draft-note">Boy ve Dünya Kupası golü değerleri yaklaşıktır; yanlış gördüğünüz bir değer olursa haber verin.</p>
+      <p className="draft-note">Boy, Dünya Kupası golü ve doğum yılı değerleri yaklaşıktır; yanlış gördüğünüz bir değer olursa haber verin.</p>
     </div>
   );
 }

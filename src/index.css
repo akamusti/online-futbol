@@ -662,6 +662,46 @@ button { font-family: inherit; }
 .draft-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; align-items: center; }
 .draft-note { text-align: center; font-size: 11px; color: var(--muted-2); margin: 0; }
 
+/* Görev Draftı — görev ızgarası, süre, mezat */
+.task-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.timer { display: flex; align-items: center; gap: 10px; margin: -4px 0 14px; }
+.timer__num { font-size: 18px; font-weight: 900; min-width: 26px; text-align: right; font-variant-numeric: tabular-nums; }
+.timer__track { flex: 1; height: 6px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.timer__track span { display: block; height: 100%; background: var(--green); transition: width .1s linear; }
+.timer--low .timer__num { color: var(--red); }
+.timer--low .timer__track span { background: var(--red); }
+
+.dlot {
+  display: flex; align-items: center; gap: 16px; padding: 14px; margin-bottom: 14px;
+  border-radius: 14px; background: var(--panel-2); border: 1px solid var(--line);
+}
+.dlot__info { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.dlot__name { font-size: 22px; font-weight: 900; letter-spacing: -.01em; }
+.dlot__meta { font-size: 12px; color: var(--muted); }
+.dlot__val { font-size: 14px; font-weight: 900; color: var(--gold); }
+.dlot__bid { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.dlot__leader { font-size: 12px; font-weight: 800; color: var(--pc, var(--muted)); }
+.dlot-banner { position: static; inset: auto; justify-content: flex-start; padding: 16px 18px; border-color: var(--pc, var(--muted-2)); }
+
+.bidders { display: flex; flex-direction: column; gap: 8px; }
+.bidder {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 10px 12px; border-radius: 12px; background: var(--panel-2);
+  border: 1px solid var(--line); border-left: 3px solid var(--pc);
+}
+.bidder.is-leader { box-shadow: 0 0 0 1px var(--pc); background: color-mix(in srgb, var(--pc) 10%, var(--panel-2)); }
+.bidder.is-out { opacity: .5; }
+.bidder__who b { display: block; color: var(--pc); font-size: 14px; }
+.bidder__who small { font-size: 11px; color: var(--muted); }
+.bidder__note { font-size: 12px; font-weight: 800; color: var(--muted); }
+.bidder.is-leader .bidder__note { color: var(--pc); }
+.bidder__btns { display: flex; gap: 6px; }
+.bidder__btns .btn { padding: 8px 12px; font-size: 13px; }
+.squad-board__budget { font-size: 11px; color: var(--muted); margin: -4px 0 8px; }
+.squad-board__budget b { color: var(--gold); }
+.result-team__spent { font-size: 11px; color: var(--muted); margin: -6px 0 10px; }
+.auto-tag { margin-left: 6px; font-size: 9px; font-weight: 900; color: var(--gold); letter-spacing: .05em; }
+
 /* ── Duyarlılık ───────────────────────────────────────────── */
 @media (max-width: 980px) {
   .auction-layout, .draft-layout { grid-template-columns: 1fr; }
@@ -678,7 +718,9 @@ button { font-family: inherit; }
   .stat-grid { grid-template-columns: 1fr; gap: 6px; }
   .bid-actions { grid-template-columns: repeat(2, 1fr); }
   .upcoming__list { grid-template-columns: 1fr; }
-  .formation-grid, .name-list { grid-template-columns: 1fr; }
+  .formation-grid, .name-list, .task-grid { grid-template-columns: 1fr; }
+  .dlot { flex-wrap: wrap; }
+  .dlot__bid { align-items: flex-start; text-align: left; width: 100%; }
   .btn--draft { margin: 10px 0 0; }
   .draft-search { min-width: 0; width: 100%; }
   .ready-team__cards { grid-template-columns: 1fr 1fr; }

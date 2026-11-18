@@ -65,21 +65,24 @@ index.html   photos/   favicon.svg
 
 Arkadaşlarla oynanan ikinci mod. Ana ekrandaki **GÖREV DRAFTI** butonuyla açılır.
 
-1. **Görevi seç:** 📏 en uzun boylu takım, 🤏 en kısa boylu takım veya 🏆 en çok Dünya Kupası golü.
+1. **Görevi seç:** 📏 en uzun boylu takım, 🤏 en kısa boylu takım, 🏆 en çok Dünya Kupası golü, 🐣 en genç kadro, 👴 en yaşlı kadro veya 🌍 en çok farklı ülke.
 2. **Dizilişi seç:** `2 DF · 2 OS · 2 FV`, `1 KL · 2 DF · 2 OS · 1 FV`, tam 11 (`4-3-3`) ya da serbest 5.
 3. **Kura:** Oyun, 2'si Türk takımı (Galatasaray, Fenerbahçe, Beşiktaş, Trabzonspor) olmak üzere 5 kulüp çeker. Beğenmezsen 🎲 ile yeniden çekebilirsin.
-4. **Draft:** 2–4 kişi, yılan sırasıyla (1-2-3, 3-2-1, …) bu kulüplerde **tüm zamanlarda** oynamış futbolcular arasından seçer. Birinin aldığı futbolcuyu diğeri alamaz.
+4. **Seçim şekli:**
+   - 🔁 **Sırayla seç:** 2–4 kişi, yılan sırasıyla (1-2-3, 3-2-1, …) bu kulüplerde **tüm zamanlarda** oynamış futbolcular arasından seçer. Birinin aldığı futbolcuyu diğeri alamaz.
+   - 🔨 **Mezat:** Futbolcular sırayla açık artırmaya çıkar. Herkesin bütçesi aynıdır (₺50M / ₺100M / ₺200M). Her boş yer için ₺1M ayrıldığından kimse kadrosunu dolduramayacak kadar harcayamaz.
+   - ⏱️ **Süre (isteğe bağlı):** 10 / 15 / 30 saniye. Sırayla seçimde süre dolarsa rastgele bir futbolcu atanır, mezatta en yüksek teklif lotu alır.
 5. **Sonuç:** Takımlar göreve göre puanlanır, kazanan ilan edilir. **Rövanş** ile aynı ayarlarla yeni kura çekilir.
 
-**Değerleri gizle** seçeneği açıkken boy ve gol sayıları draft bitene kadar görünmez. Bu durumda kimin futbolu daha iyi bildiği ortaya çıkar.
+**Değerleri gizle** seçeneği açıkken boy, gol ve doğum yılları draft bitene kadar görünmez. Bu durumda kimin futbolu daha iyi bildiği ortaya çıkar.
 
 16 kulüp ve 300'ü aşkın futbolcu `src/data/draft.ts` dosyasında tutulur. Satır biçimi:
 
 ```ts
-["İsim", "ÜL", "ST", 188, 3, ["GS", "INT"]],  // isim, ülke, mevki, boy (cm), DK golü, kulüpler
+["İsim", "ÜL", "ST", 188, 3, 1990, ["GS", "INT"]],  // isim, ülke, mevki, boy (cm), DK golü, doğum yılı, kulüpler
 ```
 
-> Boy ve Dünya Kupası golü değerleri elle girilmiştir ve yaklaşık olabilir. Yanlış bir değer görürsen o satırı düzeltmen yeterli.
+> Boy, Dünya Kupası golü ve doğum yılı değerleri elle girilmiştir ve yaklaşık olabilir. Yanlış bir değer görürsen o satırı düzeltmen yeterli.
 
 ## ✨ Özellikler
 

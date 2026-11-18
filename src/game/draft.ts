@@ -1,9 +1,9 @@
 import type { Broad } from "../types";
-import { broadOf } from "../data/players";
+import { broadOf, flagOf } from "../data/players";
 import { CLUBS, DRAFT_PLAYERS, type Club, type ClubId, type DraftPlayer } from "../data/draft";
 
 // ── Görevler ────────────────────────────────────────────────
-export type TaskId = "uzun" | "kisa" | "dkgol";
+export type TaskId = "uzun" | "kisa" | "dkgol" | "genc" | "yasli" | "ulke";
 
 export interface Task {
   id: TaskId;
@@ -12,47 +12,60 @@ export interface Task {
   icon: string;
   /** Takım puanı. */
   score: (ps: DraftPlayer[]) => number;
-  /** Tek oyuncunun bu görevdeki değeri (listede gösterilir). */
-  value: (p: DraftPlayer) => number;
+  /** Takım puanını yazar. */
   format: (n: number) => string;
-  /** Tek oyuncunun değerini yazar. */
-  formatValue: (n: number) => string;
+  /** Tek oyuncunun bu görevdeki değerini yazar (listede ve sonuçta gösterilir). */
+  show: (p: DraftPlayer) => string;
   higherWins: boolean;
 }
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+const dec = (n: number) => n.toFixed(1).replace(".", ",");
+const avgHeight = (ps: DraftPlayer[]) => avg(ps.map((p) => p.height));
+const avgBorn = (ps: DraftPlayer[]) => avg(ps.map((p) => p.born));
 
 export const TASKS: Task[] = [
   {
     id: "uzun", label: "En uzun boylu takım", icon: "📏",
-    desc: "Takımın boy ortalaması en yüksek olan kazanır.",
-    score: (ps) => avg(ps.map((p) => p.height)),
-    value: (p) => p.height,
-    format: (n) => `${n.toFixed(1).replace(".", ",")} cm`,
-    formatValue: (n) => `${n} cm`,
-    higherWins: true,
+    desc: "Boy ortalaması en yüksek olan kazanır.",
+    score: avgHeight, format: (n) => `${dec(n)} cm`, show: (p) => `${p.height} cm`, higherWins: true,
   },
   {
     id: "kisa", label: "En kısa boylu takım", icon: "🤏",
-    desc: "Takımın boy ortalaması en düşük olan kazanır.",
-    score: (ps) => avg(ps.map((p) => p.height)),
-    value: (p) => p.height,
-    format: (n) => `${n.toFixed(1).replace(".", ",")} cm`,
-    formatValue: (n) => `${n} cm`,
-    higherWins: false,
+    desc: "Boy ortalaması en düşük olan kazanır.",
+    score: avgHeight, format: (n) => `${dec(n)} cm`, show: (p) => `${p.height} cm`, higherWins: false,
   },
   {
     id: "dkgol", label: "En çok Dünya Kupası golü", icon: "🏆",
-    desc: "Oyuncuların Dünya Kupası'nda attığı toplam gol en fazla olan kazanır.",
+    desc: "Dünya Kupası'nda attıkları toplam gol en fazla olan kazanır.",
     score: (ps) => ps.reduce((a, p) => a + p.wcGoals, 0),
-    value: (p) => p.wcGoals,
-    format: (n) => `${n} gol`,
-    formatValue: (n) => `${n} gol`,
-    higherWins: true,
+    format: (n) => `${n} gol`, show: (p) => `${p.wcGoals} gol`, higherWins: true,
+  },
+  {
+    id: "genc", label: "En genç kadro", icon: "🐣",
+    desc: "Ortalama doğum yılı en yeni olan kazanır.",
+    score: avgBorn, format: (n) => `ort. ${dec(n)}`, show: (p) => `${p.born}`, higherWins: true,
+  },
+  {
+    id: "yasli", label: "En yaşlı kadro", icon: "👴",
+    desc: "Ortalama doğum yılı en eski olan kazanır. Efsaneler burada altın değerinde.",
+    score: avgBorn, format: (n) => `ort. ${dec(n)}`, show: (p) => `${p.born}`, higherWins: false,
+  },
+  {
+    id: "ulke", label: "En çok farklı ülke", icon: "🌍",
+    desc: "Kadrosunda en çok farklı milliyet olan kazanır.",
+    score: (ps) => new Set(ps.map((p) => p.nation)).size,
+    format: (n) => `${n} ülke`, show: (p) => `${flagOf(p.nation)} ${p.nation}`, higherWins: true,
   },
 ];
 
 export const TASK_BY_ID = new Map(TASKS.map((t) => [t.id, t]));
+
+// ── Seçim şekli ve süre ─────────────────────────────────────
+export type PickMode = "sira" | "mezat";
+export const TIMERS = [0, 10, 15, 30] as const;
+export type TimerSec = (typeof TIMERS)[number];
+export const MEZAT_BUDGETS = [50, 100, 200] as const;
 
 // ── Dizilişler ──────────────────────────────────────────────
 export type FormationId = "222" | "1221" | "433" | "free5";
