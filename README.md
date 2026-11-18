@@ -1,67 +1,130 @@
+<div align="center">
+
 # ⚽ Futbol Mezatı
 
-[mezat.online](https://mezat.online/) tarzında, **gerçek futbolcularla** oynanan bir açık artırma + maç simülasyonu oyunu.
+**Gerçek futbolcularla açık artırma yap, kadronu kur, maçta rakibini yen.**
 
-- **300 gerçek futbolcu** veritabanı (efsaneler + güncel yıldızlar karışık)
-- FIFA tarzı 6 özellik: HIZ, ŞUT, PAS, TOP (dribbling), SAV (defans), FİZ
-- **İki oyun modu:** AI'ya karşı (3 zorluk seviyesi) veya aynı ekranda 2 kişi (Discord'da konuşurken sırayla oynamak için)
-- **Serbest bütçe:** ₺110M–₺20000M arası istediğin değeri yazabilir, kaydırıcı veya hazır seçeneklerle de belirleyebilirsin
-- **Serbest teklif:** mezatta +1/+3/+5M butonlarının yanında istediğin tutarı yazıp **TEKLİF VER** diyebilirsin (Enter ile de olur)
-- **İlk 11** kadro kurulumu (30 lot, her takım 11 futbolcu)
-- **Kategori garantisi:** her takım en az 1 kaleci, 1 defans, 1 orta saha ve 1 forvet alır. Mezatta eksik kategori kalırsa lot havuzundaki en düşük overall'lı uygun oyuncu otomatik eklenir ("kötü oyuncu da olur" mantığı). Bu oyuncular kartta `OTOMATİK` rozetiyle işaretlenir.
-- Mezat bitince kadrolar **1 dakikadan kısa**, hareketsiz, istatistik tabanlı bir maçta karşılaşır
-- Gerçek futbolcu fotoğrafları (bulunabilenler için) + otomatik yedek kartlar
+Efsaneler ve güncel yıldızlardan oluşan 300 futbolculuk havuzda teklif savaşına gir,
+11 kişilik kadronu topla ve istatistik tabanlı maç simülasyonunda sonucu gör.
 
-## Oynama — en kolay yol
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646cff?logo=vite&logoColor=white)
+![Sunucu gerekmez](https://img.shields.io/badge/sunucu-gerekmez-22c55e)
 
-**Proje klasöründeki `index.html` dosyasına çift tıkla.** Tarayıcıda doğrudan açılır, sunucu gerekmez.
+</div>
+
+---
+
+## 🚀 Hemen oyna
+
+Kurulum gerekmez: **`index.html` dosyasına çift tıkla**, oyun tarayıcıda açılır.
+
 JS ve CSS dosyanın içine gömülüdür; fotoğraflar yanındaki `photos/` klasöründen yüklenir.
-Dosyayı taşıyacaksan `index.html`, `photos/` ve `favicon.svg` üçünü birlikte taşı.
+Oyunu başka bir yere taşıyacaksan şu üçünü birlikte taşı:
 
-## Geliştirme / yeniden derleme
+```
+index.html   photos/   favicon.svg
+```
+
+## 🎮 Nasıl oynanır
+
+| Aşama | Ne oluyor? |
+|---|---|
+| **1 · Kurulum** | Oyun modunu, rakip zorluğunu ve kişi başı bütçeyi seç. |
+| **2 · Mezat** | 30 lot boyunca her turda bir futbolcu açılır. Teklif ver ya da geç; en yüksek teklif kazanır. |
+| **3 · Kadrolar** | İki takım kafa kafaya karşılaştırılır: hücum, orta saha, savunma, kaleci. |
+| **4 · Maç** | Kadrolar 1 dakikadan kısa sürede simüle edilir: skor, xG, şutlar, maç akışı ve saha dizilişi. |
+
+### Oyun modları
+
+- 🤖 **AI'ya karşı** — Kolay, Orta veya Zor rakiple tek başına oyna.
+- 👥 **İki kişi** — Aynı ekranda sırayla teklif verin. Discord'da konuşurken arkadaşınla oynamak için ideal.
+
+### Kurallar
+
+- **Bütçe serbest:** ₺110M ile ₺20.000M arası istediğin değeri yaz, kaydırıcıyı kullan ya da hazır seçeneklerden birini seç.
+- **Kadro:** Her takım 11 futbolcu alır.
+- **Kategori garantisi:** Her takımda en az 1 kaleci, 1 defans, 1 orta saha ve 1 forvet olur.
+  Mezat bittiğinde eksik kategori kalırsa, lot havuzundaki en düşük overall'lı uygun oyuncu otomatik eklenir
+  ("kötü oyuncu da olur" mantığı). Bu oyuncular kartta **`OTOMATİK`** rozetiyle görünür.
+
+### ⌨️ Mezat kısayolları
+
+| Tuş | İşlem |
+|---|---|
+| `1` | +1M teklif |
+| `2` | +3M teklif |
+| `3` | +5M teklif |
+| `P` | Geç |
+| `Enter` | Özel teklif kutusundaki tutarı gönder |
+
+## ✨ Özellikler
+
+- **300 gerçek futbolcu**, 39 farklı ülkeden; efsaneler ve güncel yıldızlar karışık
+- **FIFA tarzı 6 özellik:** HIZ, ŞUT, PAS, TOP (dribbling), SAV (defans), FİZ
+- Kartlarda futbolcunun **şu anki kulübü ve ligi** (ör. `🏟️ Inter Miami · MLS`)
+- Mezat ekranında **sıradaki 3 lot**, kadrolardaki **mevki dağılımı** (KL / DF / OS / FV) ve canlı mezat kaydı
+- Hazır butonların (+1 / +3 / +5M) yanında **istediğin tutarda özel teklif**
+- Maç sonunda **istatistik karşılaştırması**, **dakika dakika maç akışı** ve gol atanların işaretlendiği **saha dizilişi**
+- Gerçek futbolcu fotoğrafları; bulunamayanlar için baş harflerden oluşturulan renkli kart
+- Telefonda da çalışan duyarlı tasarım
+
+## 🛠️ Geliştirme
+
+Gerekenler: [Node.js](https://nodejs.org/) 20.19 veya üstü.
 
 ```bash
 npm install
-npm run build    # index.html + photos/ + dist/ yeniden üretilir
-npm run dev      # Vite geliştirme sunucusu (http://localhost:5173/dev.html)
-npm run preview  # dist/ önizleme
+npm run dev      # geliştirme sunucusu → http://localhost:5173/dev.html
+npm run build    # çift tıklanabilir index.html + photos/ + dist/ yeniden üretilir
+npm run preview  # dist/ önizlemesi
 ```
 
-`src/` içinde bir şey değiştirirsen değişikliğin çift tıklanabilir dosyaya yansıması için `npm run build` çalıştır.
+> `src/` içinde değişiklik yaptıysan, çift tıklanan `index.html`'e yansıması için `npm run build` çalıştır.
 
-## Yeni futbolcu ekleme
+### Proje yapısı
 
-`src/data/rows.ts` dosyasına tek bir satır eklemen yeterli:
+```
+src/
+├── data/
+│   ├── rows.ts          # ham futbolcu listesi (300 satır)
+│   └── players.ts       # özellik/değer üretimi, ülke-bayrak ve kulüp-lig eşlemeleri
+├── game/
+│   ├── auction.ts       # mezat kuralları ve AI teklif mantığı
+│   └── match.ts         # maç simülasyonu (xG, gol, penaltı, olaylar)
+├── components/          # ekranlar (Kurulum, Mezat, Kadrolar, Maç) ve kart/saha bileşenleri
+└── App.tsx              # oyun akışı: kurulum → mezat → kadrolar → maç
+scripts/
+├── build-standalone.mjs # tek dosyalık index.html üretir
+└── fetch-photos*.mjs    # futbolcu fotoğraflarını indirir
+```
+
+### Yeni futbolcu ekleme
+
+`src/data/rows.ts` dosyasına bir satır eklemen yeterli:
 
 ```ts
 ["İsim", "ÜL", "Kulüp", "ST", 26, 88],
 ```
 
-Alanlar: `isim, ülke kodu(3 harf), kulüp, mevki(GK/CB/LB/RB/CDM/CM/CAM/LW/RW/ST), yaş, overall`.
+Alanlar sırasıyla: **isim**, **ülke kodu** (3 harf), **kulüp**, **mevki** (`GK` `CB` `LB` `RB` `CDM` `CM` `CAM` `LW` `RW` `ST`), **yaş**, **overall**.
 
-Kartlarda futbolcunun **şu anki kulübü ve ligi** ayrı bir rozette gösterilir (ör. `🏟️ Inter Miami · MLS`, `🏟️ Al-Nassr · Suudi Pro Lig`). Kulüp adını değiştirmek için satırdaki kulüp alanını düzenlemen yeterli; lig otomatik gelir. Yeni bir kulüp eklediysen `src/data/players.ts` içindeki `LEAGUES` eşlemesine de ekle, aksi halde "Dünya" olarak görünür. Emekli futbolcularda kulüp `Efsane` olarak yazılır.
+6 özellik, piyasa değeri ve kart görünümü overall, mevki ve yaşa göre otomatik üretilir.
 
-Özellikler (6 istatistik), piyasa değeri ve kart görünümü overall + mevki + yaşa göre otomatik üretilir.
+- Lig, kulüp adından otomatik gelir. Yeni bir kulüp eklediysen `src/data/players.ts` içindeki `LEAGUES` eşlemesine de ekle; yoksa lig "Dünya" görünür.
+- Emekli futbolcularda kulüp alanına `Efsane` yaz.
 
-## Yeni futbolcu fotoğrafı indirme
+### Fotoğraf indirme
 
 ```bash
-node scripts/fetch-photos.mjs
+node scripts/fetch-photos.mjs        # TheSportsDB'den cutout fotoğraflar
+node scripts/fetch-photos-wiki.mjs   # bulunamayanlar için Wikipedia
+node scripts/fetch-photos-wiki2.mjs  # Wikipedia aramasıyla ikinci deneme
 ```
 
-Betik TheSportsDB üzerinden gerçek cutout fotoğrafları indirir, `public/photos/` altına standart PNG olarak kaydeder. Bulunamayan oyuncular otomatik olarak isim baş harflerinden oluşturulan renkli karta düşer.
+Fotoğraflar `public/photos/` altına PNG olarak kaydedilir; `npm run build` bunları `photos/` klasörüne kopyalar.
 
-## Yapı
+---
 
-```
-src/
-  data/rows.ts        -> ham futbolcu listesi (200 satır)
-  data/players.ts     -> özellik/değer üretimi, ülke ve bayrak eşlemeleri
-  game/auction.ts     -> mezat kuralları ve AI teklif mantığı
-  game/match.ts       -> maç simülasyonu (xG, gol, penaltı, olaylar)
-  components/         -> ekranlar ve kart bileşenleri
-  App.tsx             -> oyun akışı (kurulum → mezat → kadrolar → maç)
-```
-
-Ücretsiz hayran yapımıdır; resmî değildir. Futbolcular ve görseller hak sahiplerine aittir.
-# online-futbol
+<sub>Ücretsiz bir hayran yapımıdır, resmî değildir. Futbolcu isimleri, fotoğrafları ve markalar hak sahiplerine aittir.</sub>
