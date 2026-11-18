@@ -38,6 +38,8 @@ index.html   photos/   favicon.svg
 
 ### Oyun modları
 
+> Arkadaşlarınla farklı bir oyun için aşağıdaki [Görev Draftı](#-görev-draftı) moduna da bak.
+
 - 🤖 **AI'ya karşı** — Kolay, Orta veya Zor rakiple tek başına oyna.
 - 👥 **İki kişi** — Aynı ekranda sırayla teklif verin. Discord'da konuşurken arkadaşınla oynamak için ideal.
 
@@ -58,6 +60,26 @@ index.html   photos/   favicon.svg
 | `3` | +5M teklif |
 | `P` | Geç |
 | `Enter` | Özel teklif kutusundaki tutarı gönder |
+
+## 🎯 Görev Draftı
+
+Arkadaşlarla oynanan ikinci mod. Ana ekrandaki **GÖREV DRAFTI** butonuyla açılır.
+
+1. **Görevi seç:** 📏 en uzun boylu takım, 🤏 en kısa boylu takım veya 🏆 en çok Dünya Kupası golü.
+2. **Dizilişi seç:** `2 DF · 2 OS · 2 FV`, `1 KL · 2 DF · 2 OS · 1 FV`, tam 11 (`4-3-3`) ya da serbest 5.
+3. **Kura:** Oyun, 2'si Türk takımı (Galatasaray, Fenerbahçe, Beşiktaş, Trabzonspor) olmak üzere 5 kulüp çeker. Beğenmezsen 🎲 ile yeniden çekebilirsin.
+4. **Draft:** 2–4 kişi, yılan sırasıyla (1-2-3, 3-2-1, …) bu kulüplerde **tüm zamanlarda** oynamış futbolcular arasından seçer. Birinin aldığı futbolcuyu diğeri alamaz.
+5. **Sonuç:** Takımlar göreve göre puanlanır, kazanan ilan edilir. **Rövanş** ile aynı ayarlarla yeni kura çekilir.
+
+**Değerleri gizle** seçeneği açıkken boy ve gol sayıları draft bitene kadar görünmez. Bu durumda kimin futbolu daha iyi bildiği ortaya çıkar.
+
+16 kulüp ve 300'ü aşkın futbolcu `src/data/draft.ts` dosyasında tutulur. Satır biçimi:
+
+```ts
+["İsim", "ÜL", "ST", 188, 3, ["GS", "INT"]],  // isim, ülke, mevki, boy (cm), DK golü, kulüpler
+```
+
+> Boy ve Dünya Kupası golü değerleri elle girilmiştir ve yaklaşık olabilir. Yanlış bir değer görürsen o satırı düzeltmen yeterli.
 
 ## ✨ Özellikler
 

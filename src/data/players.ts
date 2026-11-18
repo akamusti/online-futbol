@@ -10,6 +10,7 @@ const FLAGS: Record<string, string> = {
   CIV: "🇨🇮", CMR: "🇨🇲", NGA: "🇳🇬", SEN: "🇸🇳", GHA: "🇬🇭", ALG: "🇩🇿", TUN: "🇹🇳",
   COD: "🇨🇩", GEO: "🇬🇪", SRB: "🇷🇸", HUN: "🇭🇺", TUR: "🇹🇷", SVN: "🇸🇮", ECU: "🇪🇨",
   GUI: "🇬🇳",
+  BIH: "🇧🇦", SVK: "🇸🇰", WAL: "🏴", BUL: "🇧🇬", MNE: "🇲🇪", CRC: "🇨🇷", FIN: "🇫🇮", NIR: "🇬🇧",
   CHI: "🇨🇱", PAR: "🇵🇾", PER: "🇵🇪", GRE: "🇬🇷", ROU: "🇷🇴", UKR: "🇺🇦", AUT: "🇦🇹",
 };
 export const flagOf = (code: string) => FLAGS[code] ?? "⚽";
@@ -49,7 +50,7 @@ function jitter(seed: string, salt: number): number {
 
 const clamp = (n: number, lo = 20, hi = 99) => Math.max(lo, Math.min(hi, Math.round(n)));
 
-function slugify(name: string): string {
+export function slugify(name: string): string {
   return name
     .toLowerCase()
     .normalize("NFD")

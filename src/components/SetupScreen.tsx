@@ -13,6 +13,7 @@ interface Props {
   budget: number;
   onBudget: (n: number) => void;
   onStart: () => void;
+  onDraft: () => void;
 }
 
 const DIFFS: { key: Difficulty; label: string; desc: string }[] = [
@@ -24,7 +25,7 @@ const DIFFS: { key: Difficulty; label: string; desc: string }[] = [
 const PRESETS = [150, 300, 500, 800, 1200, 2000];
 
 export default function SetupScreen({
-  mode, onMode, difficulty, onDifficulty, budget, onBudget, onStart,
+  mode, onMode, difficulty, onDifficulty, budget, onBudget, onStart, onDraft,
 }: Props) {
   return (
     <div className="screen setup">
@@ -39,6 +40,9 @@ export default function SetupScreen({
         </p>
         <button className="btn btn--primary btn--hero" onClick={onStart}>
           MEZATI BAŞLAT <span>→</span>
+        </button>
+        <button className="btn btn--hero btn--draft" onClick={onDraft}>
+          GÖREV DRAFTI <span>🎯</span>
         </button>
         <div className="setup-summary">
           <span>{mode === "ai" ? "🤖 AI'ya karşı" : "👥 İki kişi"}</span>

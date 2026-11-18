@@ -7,8 +7,9 @@ import SetupScreen from "./components/SetupScreen";
 import AuctionScreen from "./components/AuctionScreen";
 import ReadyScreen from "./components/ReadyScreen";
 import MatchScreen from "./components/MatchScreen";
+import DraftScreen from "./components/DraftScreen";
 
-type Phase = "setup" | "auction" | "ready" | "match";
+type Phase = "setup" | "auction" | "ready" | "match" | "draft";
 
 export default function App() {
   const [phase, setPhase] = useState<Phase>("setup");
@@ -39,13 +40,17 @@ export default function App() {
           <span className="brand__mark">⚽</span>
           <span className="brand__name">FUTBOL<span>MEZATI</span></span>
         </div>
+        {phase === "draft" ? (
+          <nav className="topnav"><span className="active">🎯 Görev Draftı</span></nav>
+        ) : (
         <nav className="topnav">
           <span className={phase === "setup" ? "active" : ""}>1 · Kurulum</span>
           <span className={phase === "auction" ? "active" : ""}>2 · Mezat</span>
           <span className={phase === "ready" ? "active" : ""}>3 · Kadrolar</span>
           <span className={phase === "match" ? "active" : ""}>4 · Maç</span>
         </nav>
-        <div className="topbar__badge">🇹🇷 {mode === "local" ? "2 OYUNCU" : "AI"} · ₺{budget}M</div>
+        )}
+        <div className="topbar__badge">🇹🇷 {phase === "draft" ? "DRAFT" : `${mode === "local" ? "2 OYUNCU" : "AI"} · ₺${budget}M`}</div>
       </header>
 
       <main className="main">
@@ -58,6 +63,7 @@ export default function App() {
             budget={budget}
             onBudget={setBudget}
             onStart={() => setPhase("auction")}
+            onDraft={() => setPhase("draft")}
           />
         )}
         {phase === "auction" && (
@@ -80,6 +86,7 @@ export default function App() {
         {phase === "match" && result && (
           <MatchScreen result={result} mode={mode} onRestart={() => setPhase("setup")} />
         )}
+        {phase === "draft" && <DraftScreen onExit={() => setPhase("setup")} />}
       </main>
 
       <footer className="footer">
